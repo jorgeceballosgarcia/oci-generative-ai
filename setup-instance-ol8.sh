@@ -27,7 +27,7 @@ pip3.10 install flask
 
 #clone all repos
 su -c "git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /home/$USER/stable-diffusion-webui" $USER
-su -c "cd /home/$USER/stable-diffusion-webui; git checkout 9bbe1e3" $USER
+su -c "cd /home/$USER/stable-diffusion-webui; git checkout 685f963" $USER
 su -c "git clone https://github.com/KutsuyaYuki/ABG_extension /home/$USER/stable-diffusion-webui/extensions/ABG_extension" $USER
 su -c "git clone https://github.com/zero01101/openOutpaint-webUI-extension /home/$USER/stable-diffusion-webui/extensions/openOutpaint-webUI-extension" $USER
 su -c "git clone https://github.com/deforum-art/deforum-for-automatic1111-webui /home/$USER/stable-diffusion-webui/extensions/deforum-for-automatic1111-webui" $USER
