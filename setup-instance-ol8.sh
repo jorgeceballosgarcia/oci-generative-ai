@@ -43,8 +43,9 @@ cat <<EOT >> /etc/systemd/system/stable-diffusion.service
 Description=systemd service start stable-diffusion
 
 [Service]
-ExecStart=/bin/bash /home/$USER/stable-diffusion-webui/webui.sh --api
 User=$USER
+ExecStart=/bin/bash /home/$USER/stable-diffusion-webui/webui.sh --api
+
 
 [Install]
 WantedBy=multi-user.target
@@ -54,9 +55,11 @@ EOT
 cat <<EOT >> /etc/systemd/system/bloom.service
 [Unit]
 Description=systemd service start bloom
+
 [Service]
-ExecStart=/bin/bash /home/$USER/bloom-webui/start.sh
 User=$USER
+ExecStart=/bin/bash /home/$USER/bloom-webui/start.sh
+
 [Install]
 WantedBy=multi-user.target
 EOT
@@ -68,19 +71,9 @@ cat <<EOT >> /etc/systemd/system/dreambooth.service
 Description=systemd service start dreambooth
 
 [Service]
-ExecStart=/bin/bash /home/$USER/dreambooth-webui/start.sh
 User=$USER
-
-[Install]
-WantedBy=multi-user.target
-EOT
-
-cat <<EOT >> /etc/systemd/system/dreambooth.service
-[Unit]
-Description=systemd service start dreambooth
-[Service]
 ExecStart=/bin/bash /home/$USER/dreambooth-webui/start.sh
-User=$USER
+
 [Install]
 WantedBy=multi-user.target
 EOT
@@ -88,9 +81,11 @@ EOT
 cat <<EOT >> /etc/systemd/system/automatic-image-processing.service
 [Unit]
 Description=systemd service start automatic-image-processing
+
 [Service]
-ExecStart=/bin/bash /home/$USER/automatic-image-processing/start.sh
 User=$USER
+ExecStart=/bin/bash /home/$USER/automatic-image-processing/start.sh
+
 [Install]
 WantedBy=multi-user.target
 EOT
