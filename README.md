@@ -139,7 +139,7 @@ terraform destroy
 1. If one is the three apps (stable-diffusion-webui, bloom-webui, dreambooth-webui) is down, you can check the logs and the state of each service, with the commands.
 
 ```
-systemctl status stabble-diffusion
+systemctl status stable-diffusion
 systemctl status dreambooth
 systemctl status bloom-webui
 ```

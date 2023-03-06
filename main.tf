@@ -1,10 +1,10 @@
 # Create datasource of images from the image list
 data "oci_core_images" "images" {
   compartment_id = var.compartment_ocid
-  operating_system = "Canonical Ubuntu"
+  operating_system = "Oracle Linux"
   filter {
     name = "display_name"
-    values = ["^Canonical-Ubuntu-22.04-([\\.0-9-]+)$"]
+    values = ["^Oracle-Linux-8.7-Gen2-GPU-([\\.0-9-]+)$"]
     regex = true
   }
 }
@@ -31,7 +31,7 @@ resource "oci_core_instance" "instance" {
   # Add private key
   metadata = {
     ssh_authorized_keys = file(var.ssh_public_key_path)
-    user_data           = base64encode(file("setup-instance.sh"))
+    user_data           = base64encode(file("setup-instance-ol8.sh"))
   }
 }
 
@@ -111,10 +111,10 @@ output "instance_public_ip" {
   
   Wait 25 minutes for the instance to be ready.
 
-  ssh -i server.key ubuntu@${oci_core_instance.instance.public_ip}
+  ssh -i server.key opc@${oci_core_instance.instance.public_ip}
   
   ssh tunnel => 
-    ssh -i server.key -L 7860:localhost:7860 -L 5000:localhost:5000 -L 3000:localhost:3000 -L 4000:localhost:4000 ubuntu@${oci_core_instance.instance.public_ip}
+    ssh -i server.key -L 7860:localhost:7860 -L 5000:localhost:5000 -L 3000:localhost:3000 -L 4000:localhost:4000 opc@${oci_core_instance.instance.public_ip}
 
   Setup and dreambooth => http://localhost:3000
   
