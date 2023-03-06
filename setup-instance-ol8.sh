@@ -22,16 +22,22 @@ echo "alias python3='python3.10'" >> .bashrc
 source .bashrc
 update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 1
 update-alternatives --set python3 /usr/local/bin/python3.10
-pip3.10 install --upgrade pip
-pip3.10 install flask
+pip3.10 install --upgrade pip 
+pip3.10 install flask diffusers transformers accelerate scipy safetensors
+
+
 
 #clone all repos
+#su -c "git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /home/$USER/stable-diffusion-webui" $USER
+#su -c "cd /home/$USER/stable-diffusion-webui; git checkout 685f963" $USER
+#su -c "git clone https://github.com/KutsuyaYuki/ABG_extension /home/$USER/stable-diffusion-webui/extensions/ABG_extension" $USER
+#su -c "git clone https://github.com/zero01101/openOutpaint-webUI-extension /home/$USER/stable-diffusion-webui/extensions/openOutpaint-webUI-extension" $USER
+#su -c "git clone https://github.com/deforum-art/deforum-for-automatic1111-webui /home/$USER/stable-diffusion-webui/extensions/deforum-for-automatic1111-webui" $USER
+#su -c "echo https://github.com/C43H66N12O12S2/stable-diffusion-webui/releases/download/linux/xformers-0.0.14.dev0-cp310-cp310-linux_x86_64.whl >> /home/$USER/stable-diffusion-webui/requirements.txt" $USER
+
 su -c "git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /home/$USER/stable-diffusion-webui" $USER
-su -c "cd /home/$USER/stable-diffusion-webui; git checkout 685f963" $USER
-su -c "git clone https://github.com/KutsuyaYuki/ABG_extension /home/$USER/stable-diffusion-webui/extensions/ABG_extension" $USER
-su -c "git clone https://github.com/zero01101/openOutpaint-webUI-extension /home/$USER/stable-diffusion-webui/extensions/openOutpaint-webUI-extension" $USER
-su -c "git clone https://github.com/deforum-art/deforum-for-automatic1111-webui /home/$USER/stable-diffusion-webui/extensions/deforum-for-automatic1111-webui" $USER
-su -c "echo https://github.com/C43H66N12O12S2/stable-diffusion-webui/releases/download/linux/xformers-0.0.14.dev0-cp310-cp310-linux_x86_64.whl >> /home/$USER/stable-diffusion-webui/requirements.txt" $USER
+su -c "cd /home/$USER/stable-diffusion-webui; mkdir -p models/Stable-diffusion; cd models/Stable-diffusion"
+
 su -c "git clone https://github.com/carlgira/bloom-webui.git /home/$USER/bloom-webui" $USER
 su -c "cd /home/$USER/bloom-webui; git checkout f21a51d" $USER
 su -c "git clone https://github.com/carlgira/dreambooth-webui.git /home/$USER/dreambooth-webui" $USER
