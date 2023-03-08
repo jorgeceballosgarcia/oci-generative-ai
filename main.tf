@@ -180,117 +180,19 @@ resource "oci_bastion_session" "generative-ai-bastion-session-ssh" {
     target_resource_id = oci_core_instance.instance.id
     target_resource_operating_system_user_name = "opc"
     target_resource_port                       = "22"
-    target_resource_private_ip_address = oci_core_instance.instance.private_ip
   }
   session_ttl_in_seconds = 3600
   display_name = "generative-ai-bastion-session-ssh"
 }
 
-resource "oci_bastion_session" "generative-ai-bastion-session-sd" {
-
-  depends_on = [
-    time_sleep.wait_for_bastion_agent_active
-  ]
-
-  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
-  key_details {
-    public_key_content = file(var.ssh_public_key_path)
-  }
-  target_resource_details {
-    session_type       = "PORT_FORWARDING"
-    target_resource_id = oci_core_instance.instance.id
-    target_resource_operating_system_user_name = "opc"
-    target_resource_port                       = "7860"
-    target_resource_private_ip_address = oci_core_instance.instance.private_ip
-  }
-  session_ttl_in_seconds = 3600
-  display_name = "generative-ai-bastion-session-sd"
-}
-
-resource "oci_bastion_session" "generative-ai-bastion-session-db" {
-
-  depends_on = [
-    time_sleep.wait_for_bastion_agent_active
-  ]
-
-  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
-  key_details {
-    public_key_content = file(var.ssh_public_key_path)
-  }
-  target_resource_details {
-    session_type       = "PORT_FORWARDING"
-    target_resource_id = oci_core_instance.instance.id
-    target_resource_operating_system_user_name = "opc"
-    target_resource_port                       = "3000"
-    target_resource_private_ip_address = oci_core_instance.instance.private_ip
-  }
-  session_ttl_in_seconds = 3600
-  display_name = "generative-ai-bastion-session-db"
-}
-
-resource "oci_bastion_session" "generative-ai-bastion-session-bm" {
-
-  depends_on = [
-    time_sleep.wait_for_bastion_agent_active
-  ]
-
-  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
-  key_details {
-    public_key_content = file(var.ssh_public_key_path)
-  }
-  target_resource_details {
-    session_type       = "PORT_FORWARDING"
-    target_resource_id = oci_core_instance.instance.id
-    target_resource_operating_system_user_name = "opc"
-    target_resource_port                       = "5000"
-    target_resource_private_ip_address = oci_core_instance.instance.private_ip
-  }
-  session_ttl_in_seconds = 3600
-  display_name = "generative-ai-bastion-session-bm"
-}
-
-resource "oci_bastion_session" "generative-ai-bastion-session-aip" {
-
-  depends_on = [
-    time_sleep.wait_for_bastion_agent_active
-  ]
-
-  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
-  key_details {
-    public_key_content = file(var.ssh_public_key_path)
-  }
-  target_resource_details {
-    session_type       = "PORT_FORWARDING"
-    target_resource_id = oci_core_instance.instance.id
-    target_resource_operating_system_user_name = "opc"
-    target_resource_port                       = "4000"
-    target_resource_private_ip_address = oci_core_instance.instance.private_ip
-  }
-  session_ttl_in_seconds = 3600
-  display_name = "generative-ai-bastion-session-aip"
-}
-
-# output "connection_details" {
-#   value = oci_bastion_session.generative-ai-bastion-session-ssh.ssh_metadata.command
-# }
-
-output "instance_private_ip" {
+output "connection_details" {
   value = <<EOF
   
   Wait 25 minutes for the instance to be ready.
  
-  Bastion ssh: ${oci_bastion_session.generative-ai-bastion-session-ssh.ssh_metadata.command}
-
-  Bastion Dreambooth: ${oci_bastion_session.generative-ai-bastion-session-db.ssh_metadata.command}
-
-  Bastion Stable Diffusion: ${oci_bastion_session.generative-ai-bastion-session-sd.ssh_metadata.command}
-
-  Bastion Bloom: ${oci_bastion_session.generative-ai-bastion-session-bm.ssh_metadata.command}
-
-  Bastion Automatic Image Processing: ${oci_bastion_session.generative-ai-bastion-session-aip.ssh_metadata.command}
+  Bastion ssh: ${oci_bastion_session.generative-ai-bastion-session-ssh.ssh_metadata.command} -L 7860:localhost:7860 -L 5000:localhost:5000 -L 3000:localhost:3000 -L 4000:localhost:4000 
 
   Change <privateKey> with server.key
-  Change <localPort> with the port of the application
 
   Access URLs:
   Setup and dreambooth => http://localhost:3000
