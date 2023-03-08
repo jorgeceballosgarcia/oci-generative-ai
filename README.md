@@ -137,6 +137,15 @@ To delete the instance execute.
 terraform destroy
 ```
 
+## Start&Stop Instance
+To start or stop the instance just execute the script start-stop-instance.sh
+
+If the instance is RUNNING the script STOP it and viceversa
+
+```
+/bin/bash start-stop-instance.sh
+```
+
 ## Troubleshooting
 1. If one is the three apps (stable-diffusion-webui, bloom-webui, dreambooth-webui, automatic-image-processing) is down, you can check the logs and the state of each service, with the commands.
 
