@@ -16,8 +16,6 @@ resource "oci_core_instance" "instance" {
   display_name        = var.instance_name
   shape               = var.instance_shape
 
-
-  
   source_details {
     source_type = "image"
     source_id   = data.oci_core_images.images.images[0].id
@@ -25,14 +23,24 @@ resource "oci_core_instance" "instance" {
   }
 
   create_vnic_details {
-    assign_public_ip = "true"
-    subnet_id        = oci_core_subnet.subnet.id
+    assign_public_ip = "false"
+    subnet_id        = oci_core_subnet.private_subnet.id
   }
   # Add private key
   metadata = {
     ssh_authorized_keys = file(var.ssh_public_key_path)
     user_data           = base64encode(file("setup-instance-ol8.sh"))
   }
+
+  agent_config {
+    is_management_disabled = false
+    is_monitoring_disabled = false
+    plugins_config {
+      desired_state = "ENABLED"
+      name = "Bastion"
+    }
+  }
+
 }
 
 # Create datasource for availability domains
@@ -40,21 +48,37 @@ data "oci_identity_availability_domains" "ADs" {
   compartment_id = var.compartment_ocid
 }
 
-# Create internet gateway
-resource "oci_core_internet_gateway" "internet_gateway" {
+# Create a NAT Gateway
+resource "oci_core_nat_gateway" "nat_gateway" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
-  display_name   = "generative-ai-internet-gateway"
+  display_name   = "generative-ai-nat-gateway-private"
 }
 
+# Create internet gateway
+# resource "oci_core_internet_gateway" "internet_gateway" {
+#   compartment_id = var.compartment_ocid
+#   vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
+#   display_name   = "generative-ai-internet-gateway"
+# }
+
 # Create route table
+# resource "oci_core_route_table" "generative_ai_route_table" {
+#   compartment_id = var.compartment_ocid
+#   vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
+#   display_name   = "generative-ai-route-table"
+#   route_rules {
+#     destination = "0.0.0.0/0"
+#     network_entity_id = oci_core_internet_gateway.internet_gateway.id
+#   }
+# }
 resource "oci_core_route_table" "generative_ai_route_table" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
-  display_name   = "generative-ai-route-table"
+  display_name   = "generative-ai-route-table-private"
   route_rules {
     destination = "0.0.0.0/0"
-    network_entity_id = oci_core_internet_gateway.internet_gateway.id
+    network_entity_id = oci_core_nat_gateway.nat_gateway.id
   }
 }
 
@@ -62,7 +86,7 @@ resource "oci_core_route_table" "generative_ai_route_table" {
 resource "oci_core_security_list" "generative_ai_security_list" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
-  display_name   = "generative-ai-security-list"
+  display_name   = "generative-ai-security-list-private"
 
   egress_security_rules {
     destination = "0.0.0.0/0"
@@ -89,40 +113,193 @@ resource "oci_core_security_list" "generative_ai_security_list" {
 }
 
 # Create a subnet
-resource "oci_core_subnet" "subnet" {
-  cidr_block        = var.subnet_cidr
-  compartment_id    = var.compartment_ocid
-  display_name      = "generative-ai-subnet"
-  vcn_id            = oci_core_virtual_network.generative_ai_vcn.id
+# resource "oci_core_subnet" "subnet" {
+#   cidr_block        = var.subnet_cidr
+#   compartment_id    = var.compartment_ocid
+#   display_name      = "generative-ai-subnet"
+#   vcn_id            = oci_core_virtual_network.generative_ai_vcn.id
+#   route_table_id    = oci_core_route_table.generative_ai_route_table.id
+#   security_list_ids = ["${oci_core_security_list.generative_ai_security_list.id}"]
+#   dhcp_options_id   = oci_core_virtual_network.generative_ai_vcn.default_dhcp_options_id
+# }
+
+# Create private subnet
+resource "oci_core_subnet" "private_subnet" {
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
+  cidr_block     = var.subnet_cidr
+  display_name   = "generative-ai-subnet-private"
+
+  prohibit_public_ip_on_vnic = true
+
   route_table_id    = oci_core_route_table.generative_ai_route_table.id
-  security_list_ids = ["${oci_core_security_list.generative_ai_security_list.id}"]
   dhcp_options_id   = oci_core_virtual_network.generative_ai_vcn.default_dhcp_options_id
+  security_list_ids = ["${oci_core_security_list.generative_ai_security_list.id}"]
 }
 
 # Create a virtual network
 resource "oci_core_virtual_network" "generative_ai_vcn" {
   cidr_block     = var.vcn_cidr
   compartment_id = var.compartment_ocid
-  display_name   = "generative-ai-vcn"
+  display_name   = "generative-ai-vcn-private"
 }
 
-output "instance_public_ip" {
+
+resource "oci_bastion_bastion" "generative-ai-bastion" {
+
+  bastion_type     = "STANDARD"
+  compartment_id   = var.compartment_ocid
+  target_subnet_id = oci_core_subnet.private_subnet.id
+
+  client_cidr_block_allow_list = [
+    "0.0.0.0/0"
+  ]
+  name = "generative-ai-bastion"
+  
+}
+
+resource "time_sleep" "wait_for_bastion_agent_active" {
+  create_duration = "300s"
+  depends_on = [
+    oci_bastion_bastion.generative-ai-bastion
+  ]
+}
+
+resource "oci_bastion_session" "generative-ai-bastion-session-ssh" {
+
+  depends_on = [
+    time_sleep.wait_for_bastion_agent_active
+  ]
+
+  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
+  key_details {
+    public_key_content = file(var.ssh_public_key_path)
+  }
+  target_resource_details {
+    session_type       = "MANAGED_SSH"
+    target_resource_id = oci_core_instance.instance.id
+    target_resource_operating_system_user_name = "opc"
+    target_resource_port                       = "22"
+    target_resource_private_ip_address = oci_core_instance.instance.private_ip
+  }
+  session_ttl_in_seconds = 3600
+  display_name = "generative-ai-bastion-session-ssh"
+}
+
+resource "oci_bastion_session" "generative-ai-bastion-session-sd" {
+
+  depends_on = [
+    time_sleep.wait_for_bastion_agent_active
+  ]
+
+  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
+  key_details {
+    public_key_content = file(var.ssh_public_key_path)
+  }
+  target_resource_details {
+    session_type       = "PORT_FORWARDING"
+    target_resource_id = oci_core_instance.instance.id
+    target_resource_operating_system_user_name = "opc"
+    target_resource_port                       = "7860"
+    target_resource_private_ip_address = oci_core_instance.instance.private_ip
+  }
+  session_ttl_in_seconds = 3600
+  display_name = "generative-ai-bastion-session-sd"
+}
+
+resource "oci_bastion_session" "generative-ai-bastion-session-db" {
+
+  depends_on = [
+    time_sleep.wait_for_bastion_agent_active
+  ]
+
+  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
+  key_details {
+    public_key_content = file(var.ssh_public_key_path)
+  }
+  target_resource_details {
+    session_type       = "PORT_FORWARDING"
+    target_resource_id = oci_core_instance.instance.id
+    target_resource_operating_system_user_name = "opc"
+    target_resource_port                       = "3000"
+    target_resource_private_ip_address = oci_core_instance.instance.private_ip
+  }
+  session_ttl_in_seconds = 3600
+  display_name = "generative-ai-bastion-session-db"
+}
+
+resource "oci_bastion_session" "generative-ai-bastion-session-bm" {
+
+  depends_on = [
+    time_sleep.wait_for_bastion_agent_active
+  ]
+
+  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
+  key_details {
+    public_key_content = file(var.ssh_public_key_path)
+  }
+  target_resource_details {
+    session_type       = "PORT_FORWARDING"
+    target_resource_id = oci_core_instance.instance.id
+    target_resource_operating_system_user_name = "opc"
+    target_resource_port                       = "5000"
+    target_resource_private_ip_address = oci_core_instance.instance.private_ip
+  }
+  session_ttl_in_seconds = 3600
+  display_name = "generative-ai-bastion-session-bm"
+}
+
+resource "oci_bastion_session" "generative-ai-bastion-session-aip" {
+
+  depends_on = [
+    time_sleep.wait_for_bastion_agent_active
+  ]
+
+  bastion_id = oci_bastion_bastion.generative-ai-bastion.id
+  key_details {
+    public_key_content = file(var.ssh_public_key_path)
+  }
+  target_resource_details {
+    session_type       = "PORT_FORWARDING"
+    target_resource_id = oci_core_instance.instance.id
+    target_resource_operating_system_user_name = "opc"
+    target_resource_port                       = "4000"
+    target_resource_private_ip_address = oci_core_instance.instance.private_ip
+  }
+  session_ttl_in_seconds = 3600
+  display_name = "generative-ai-bastion-session-aip"
+}
+
+# output "connection_details" {
+#   value = oci_bastion_session.generative-ai-bastion-session-ssh.ssh_metadata.command
+# }
+
+output "instance_private_ip" {
   value = <<EOF
   
   Wait 25 minutes for the instance to be ready.
+ 
+  Bastion ssh: ${oci_bastion_session.generative-ai-bastion-session-ssh.ssh_metadata.command}
 
-  ssh -i server.key opc@${oci_core_instance.instance.public_ip}
-  
-  ssh tunnel => 
-    ssh -i server.key -L 7860:localhost:7860 -L 5000:localhost:5000 -L 3000:localhost:3000 -L 4000:localhost:4000 opc@${oci_core_instance.instance.public_ip}
+  Bastion Dreambooth: ${oci_bastion_session.generative-ai-bastion-session-db.ssh_metadata.command}
 
+  Bastion Stable Diffusion: ${oci_bastion_session.generative-ai-bastion-session-sd.ssh_metadata.command}
+
+  Bastion Bloom: ${oci_bastion_session.generative-ai-bastion-session-bm.ssh_metadata.command}
+
+  Bastion Automatic Image Processing: ${oci_bastion_session.generative-ai-bastion-session-aip.ssh_metadata.command}
+
+  Change <privateKey> with server.key
+  Change <localPort> with the port of the application
+
+  Access URLs:
   Setup and dreambooth => http://localhost:3000
-  
-  stable diffusion => http://localhost:7860
-  
-  bloom => http://localhost:5000
-
-  automatic-image-processing => http://localhost:4000
+  Stable Diffusion => http://localhost:7860
+  Bloom => http://localhost:5000
+  Automatic Image Processing => http://localhost:4000
 
 EOF
 }
+
+
+#oci bastion session create-port-forwarding --bastion-id ocid1.bastion.oc1.eu-paris-1.amaaaaaajaynoiyaukebufbu6dgsiep7b6vh4e3gydsx4nqttcbj36ondlbq --display-name "session-test-ocicli" --ssh-public-key-file "/Users/jocebal/Work/Projects/Oracle/OCI/oci-generative-ai/server.key.pub" --target-private-ip 10.0.0.102 --session-ttl 3000
