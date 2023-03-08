@@ -1,5 +1,5 @@
 # OCI Generative AI
-Terraform script to start a **stable-diffusion, bloom, dreambooth and automatic-image-processing** in compute instance using a nvidia GPU in OCI.
+Terraform script to start a **stable-diffusion, bloom, dreambooth and automatic-image-processing** in compute instance using a nvidia GPU and Oracle Linux 8 in OCI.
 
 **Stable Diffusion** is a state of the art text-to-image model that generates images from text.
 
@@ -183,4 +183,5 @@ The life of the bastion service session is one hour, after that time it disappea
 - The stable-diffusion-webui project https://github.com/AUTOMATIC1111/stable-diffusion-webui
 - The bloom-webui https://github.com/carlgira/bloom-webui 
 - The dreambooth-webui https://github.com/carlgira/dreambooth-webui
+- The automatic-image-processing https://github.com/carlgira/automatic-image-processing
 - DotCSV explanation https://www.youtube.com/watch?v=rgKBjRLvjLs
