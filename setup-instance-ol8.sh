@@ -45,7 +45,7 @@ su -c "git clone https://github.com/carlgira/bloom-webui.git /home/$USER/bloom-w
 su -c "cd /home/$USER/bloom-webui; git checkout f21a51d" $USER
 su -c "git clone https://github.com/carlgira/dreambooth-webui.git /home/$USER/dreambooth-webui" $USER
 su -c "cd /home/$USER/dreambooth-webui; git checkout f21a51d" $USER
-su -c "git clone https://github.com/carlgira/automatic-image-processing /home/$USER/automatic-image-processing" $USER
+su -c "git clone https://github.com/carlgira/automatic-image-processing.git /home/$USER/automatic-image-processing" $USER
 
 #create service for apps
 

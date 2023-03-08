@@ -1,5 +1,5 @@
 # OCI Generative AI
-Terraform script to start a **stable-diffusion, bloom and dreambooth** in compute instance using a nvidia GPU in OCI.
+Terraform script to start a **stable-diffusion, bloom, dreambooth and automatic-image-processing** in compute instance using a nvidia GPU in OCI.
 
 **Stable Diffusion** is a state of the art text-to-image model that generates images from text.
 
@@ -20,7 +20,7 @@ Terraform script to start a **stable-diffusion, bloom and dreambooth** in comput
 2. Clone this repository
 ```
 # Stable diffusion 1.5
-git clone --depth 1 --branch sd1.5-bloom https://github.com/carlgira/oci-generative-ai.git
+git clone --depth 1 --branch A.10.OL8 https://github.com/jorgeceballosgarcia/oci-generative-ai.git
 ```
 
 3. Set three variables in your path. 
@@ -47,14 +47,16 @@ terraform plan
 terraform apply
 ```
 
-**After applying, the service will be ready in about 25 minutes** (it will install OS dependencies, nvidia drivers, and install stable-diffusion-web-ui, bloom-web-ui and dreambooth-webui.
+**After applying, the service will be ready in about 25 minutes** (it will install OS dependencies, nvidia drivers, and install stable-diffusion-web-ui, bloom-web-ui, dreambooth-webui and automatic-image-processing.
 
 ## Post configuration
 To test the app it's necessary to create a ssh tunel to the port 7860 (stable-diffusion-webui), 5000 (bloom) and 3000 (dreambooth).  (the output of the terraform script will give the ssh full command so you only need to copy and paste)
 
 ```
-ssh -i server.key -L 7860:localhost:7860 -L 5000:localhost:5000 -L 3000:localhost:3000 ubuntu@<instance-public-ip>
+ssh -i server.key -o ProxyCommand="ssh -i server.key -W %h:%p -p 22 ocid1.bastionsession.XXXX@host.bastion.XXXX.oci.oraclecloud.com" -p 22 opc@<instance_private_ip> -L 7860:localhost:7860 -L 5000:localhost:5000 -L 3000:localhost:3000 -L 4000:localhost:4000
 ```
+The instance created is located in a vcn with a private subnet, and "Bastion Service" is used to connect to it.
+The life of the bastion service session is one hour, after that time it disappears. To be able to connect again, we will have to launch ```terraform apply``` again and it will create a new bastion session.
 
 The last step of the setup is to download the stable-diffusion model, for that, is necessary to have a huggingface account, create a token and accept to the conditions to use stable-diffusion.
 
@@ -136,12 +138,13 @@ terraform destroy
 ```
 
 ## Troubleshooting
-1. If one is the three apps (stable-diffusion-webui, bloom-webui, dreambooth-webui) is down, you can check the logs and the state of each service, with the commands.
+1. If one is the three apps (stable-diffusion-webui, bloom-webui, dreambooth-webui, automatic-image-processing) is down, you can check the logs and the state of each service, with the commands.
 
 ```
 systemctl status stable-diffusion
 systemctl status dreambooth
 systemctl status bloom-webui
+systemctl status automatic-image-processing
 ```
 
 You can try to start the service by.
@@ -155,8 +158,8 @@ ps -ef | grep acc
 ```
 It should appear 3 processes using the "accelerate" binary.
 
-3. Error ***Error: 404-NotAuthorizedOrNotFound, shape VM.GPU2.1 not found***.
-This could be happening because in your availability domain (AD) there is no a VM.GPU2.1 shape available. The script use by default the first AD, but maybe you have to change this manually.
+3. Error ***Error: 404-NotAuthorizedOrNotFound, shape VM.GPU.A10.1 not found***.
+This could be happening because in your availability domain (AD) there is no a VM.GPU.A10.1 shape available. The script use by default the first AD, but maybe you have to change this manually.
 
 Get the list of AD of your tenancy
 ```
@@ -171,6 +174,10 @@ This error can also happen if in your region there is no VM.GPU2.1, in that case
 ```
 export TF_VAR_region='<other-region>'
 ```
+4. I cannot connect
+
+The instance created is located in a vcn with a private subnet, and "Bastion Service" is used to connect to it.
+The life of the bastion service session is one hour, after that time it disappears. To be able to connect again, we will have to launch ```terraform apply``` again and it will create a new bastion session.
 
 ## References
 - The stable-diffusion-webui project https://github.com/AUTOMATIC1111/stable-diffusion-webui
