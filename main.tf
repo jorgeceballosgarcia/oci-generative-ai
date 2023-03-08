@@ -55,23 +55,6 @@ resource "oci_core_nat_gateway" "nat_gateway" {
   display_name   = "generative-ai-nat-gateway-private"
 }
 
-# Create internet gateway
-# resource "oci_core_internet_gateway" "internet_gateway" {
-#   compartment_id = var.compartment_ocid
-#   vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
-#   display_name   = "generative-ai-internet-gateway"
-# }
-
-# Create route table
-# resource "oci_core_route_table" "generative_ai_route_table" {
-#   compartment_id = var.compartment_ocid
-#   vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
-#   display_name   = "generative-ai-route-table"
-#   route_rules {
-#     destination = "0.0.0.0/0"
-#     network_entity_id = oci_core_internet_gateway.internet_gateway.id
-#   }
-# }
 resource "oci_core_route_table" "generative_ai_route_table" {
   compartment_id = var.compartment_ocid
   vcn_id         = oci_core_virtual_network.generative_ai_vcn.id
@@ -112,16 +95,6 @@ resource "oci_core_security_list" "generative_ai_security_list" {
     }
 }
 
-# Create a subnet
-# resource "oci_core_subnet" "subnet" {
-#   cidr_block        = var.subnet_cidr
-#   compartment_id    = var.compartment_ocid
-#   display_name      = "generative-ai-subnet"
-#   vcn_id            = oci_core_virtual_network.generative_ai_vcn.id
-#   route_table_id    = oci_core_route_table.generative_ai_route_table.id
-#   security_list_ids = ["${oci_core_security_list.generative_ai_security_list.id}"]
-#   dhcp_options_id   = oci_core_virtual_network.generative_ai_vcn.default_dhcp_options_id
-# }
 
 # Create private subnet
 resource "oci_core_subnet" "private_subnet" {
@@ -202,6 +175,3 @@ output "connection_details" {
 
 EOF
 }
-
-
-#oci bastion session create-port-forwarding --bastion-id ocid1.bastion.oc1.eu-paris-1.amaaaaaajaynoiyaukebufbu6dgsiep7b6vh4e3gydsx4nqttcbj36ondlbq --display-name "session-test-ocicli" --ssh-public-key-file "/Users/jocebal/Work/Projects/Oracle/OCI/oci-generative-ai/server.key.pub" --target-private-ip 10.0.0.102 --session-ttl 3000
