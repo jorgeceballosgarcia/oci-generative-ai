@@ -2,10 +2,11 @@
 data "oci_core_images" "images" {
   compartment_id = var.compartment_ocid
   operating_system = "Oracle Linux"
+  operating_system_version = "8"
   filter {
     name = "display_name"
-    values = ["^Oracle-Linux-8.7-Gen2-GPU-([\\.0-9-]+)$"]
-    regex = true
+    values = ["^.*-GPU-.*$"]
+    regex  = true
   }
 }
 
@@ -19,7 +20,7 @@ resource "oci_core_instance" "instance" {
   source_details {
     source_type = "image"
     source_id   = data.oci_core_images.images.images[0].id
-    boot_volume_size_in_gbs = 100
+    boot_volume_size_in_gbs = 500
   }
 
   create_vnic_details {
@@ -154,7 +155,7 @@ resource "oci_bastion_session" "generative-ai-bastion-session-ssh" {
     target_resource_operating_system_user_name = "opc"
     target_resource_port                       = "22"
   }
-  session_ttl_in_seconds = 3600
+  session_ttl_in_seconds = 10800
   display_name = "generative-ai-bastion-session-ssh"
 }
 

@@ -4,7 +4,19 @@ main_function() {
 USER='opc'
 
 # resize boot volume
-/usr/libexec/oci-growfs -y 
+#/usr/libexec/oci-growfs -y 
+
+# Resize root partition
+printf "fix\n" | parted ---pretend-input-tty /dev/sda print
+VALUE=$(printf "unit s\nprint\n" | parted ---pretend-input-tty /dev/sda |  grep lvm | awk '{print $2}' | rev | cut -c2- | rev)
+printf "rm 3\nIgnore\n" | parted ---pretend-input-tty /dev/sda
+printf "unit s\nmkpart\n/dev/sda3\n\n$VALUE\n100%%\n" | parted ---pretend-input-tty /dev/sda
+pvresize /dev/sda3
+pvs
+vgs
+lvextend -l +100%FREE /dev/mapper/ocivolume-root
+xfs_growfs -d /
+
 
 #update packages
 dnf update -y
@@ -23,7 +35,7 @@ source .bashrc
 update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 1
 update-alternatives --set python3 /usr/local/bin/python3.10
 pip3.10 install --upgrade pip 
-pip3.10 install flask diffusers transformers accelerate scipy safetensors
+pip3.10 install flask diffusers transformers accelerate scipy safetensors xformers
 
 
 
@@ -37,7 +49,7 @@ pip3.10 install flask diffusers transformers accelerate scipy safetensors
 
 #last version sd
 su -c "git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /home/$USER/stable-diffusion-webui" $USER
-su -c "cd /home/$USER/stable-diffusion-webui; mkdir -p models/Stable-diffusion; cd models/Stable-diffusion; wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt"
+su -c "cd /home/$USER/stable-diffusion-webui; mkdir -p stable-diffusion-webui/models/Stable-diffusion; cd stable-diffusion-webui/models/Stable-diffusion; wget https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors"
 #2.1
 #https://huggingface.co/stabilityai/stable-diffusion-2-1/resolve/main/v2-1_768-ema-pruned.ckpt
 
