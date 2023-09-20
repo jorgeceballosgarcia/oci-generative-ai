@@ -49,7 +49,9 @@ pip3.10 install flask diffusers transformers accelerate scipy safetensors xforme
 
 #last version sd
 su -c "git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /home/$USER/stable-diffusion-webui" $USER
-su -c "cd /home/$USER/stable-diffusion-webui; mkdir -p stable-diffusion-webui/models/Stable-diffusion; cd stable-diffusion-webui/models/Stable-diffusion; wget https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors; wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt" $USER
+#su -c "cd /home/$USER/stable-diffusion-webui; mkdir -p stable-diffusion-webui/models/Stable-diffusion; cd stable-diffusion-webui/models/Stable-diffusion; wget https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors; wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt" $USER
+#su -c "cd /home/$USER/stable-diffusion-webui; mkdir -p models/Stable-diffusion; cd models/Stable-diffusion; wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt"
+
 #2.1
 #https://huggingface.co/stabilityai/stable-diffusion-2-1/resolve/main/v2-1_768-ema-pruned.ckpt
 
@@ -68,7 +70,7 @@ Description=systemd service start stable-diffusion
 
 [Service]
 User=$USER
-ExecStart=/bin/bash /home/$USER/stable-diffusion-webui/webui.sh --api
+ExecStart=/bin/bash /home/$USER/stable-diffusion-webui/webui.sh --api --xformers
 
 
 [Install]
