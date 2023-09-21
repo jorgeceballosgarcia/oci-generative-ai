@@ -158,15 +158,21 @@ resource "oci_bastion_session" "generative-ai-bastion-session-ssh" {
   session_ttl_in_seconds = 10800
   display_name = "generative-ai-bastion-session-ssh"
 }
-
+locals{
+    localCommand = oci_bastion_session.generative-ai-bastion-session-ssh.ssh_metadata.command
+    replaceMan = replace(" # NOTE: The OCI Bastion Host has rotated known host keys to use the ED25519 algorithm. If you receive a man-in-the-middle error when executing the SSH command, please trust the new host key when prompted.", " ", oci_bastion_session.generative-ai-bastion-session-ssh.ssh_metadata.command)
+    replaceKey = replace("<privateKey>", "server.key", local.replaceMan)
+    sshFinal = replace("opc@", " -L 7860:localhost:7860 -L 5000:localhost:5000 -L 3000:localhost:3000 -L 4000:localhost:4000 opc@", local.replaceKey)
+}
 output "connection_details" {
   value = <<EOF
   
   Wait 25 minutes for the instance to be ready.
  
-  Bastion ssh: ${oci_bastion_session.generative-ai-bastion-session-ssh.ssh_metadata.command} -L 7860:localhost:7860 -L 5000:localhost:5000 -L 3000:localhost:3000 -L 4000:localhost:4000 
-
-  Change <privateKey> with server.key
+  Bastion ssh: ${local.replaceMan} 
+  Bastion ssh: ${local.replaceKey} 
+  Bastion ssh: ${local.sshFinal} 
+  Bastion ssh: ${local.localCommand}
 
   Access URLs:
   Setup and dreambooth => http://localhost:3000
